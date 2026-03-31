@@ -45,20 +45,24 @@ export class MatchGameScene extends Phaser.Scene {
 		this.bg.fillRect(0, 0, width, height);
 	};
 	
-	showFadedNumber (number) {
+	// MODIFIED: This function now shows the full equation of the matched pair.
+	showFadedNumber (sum, num1, num2) {
 		const { width, height } = this.scale;
-		const numText = this.add.text(width / 2, height / 2, number.toString(), {
-			fontSize: '400px',
+		// Create the equation string from the matched card values.
+		const equation = `${num1} + ${num2} = ${sum}`;
+		const numText = this.add.text(width / 2, height / 2, equation, {
+			fontSize: '150px', // Adjusted font size for better fit
 			fontFamily: 'Arial',
 			fontStyle: 'bold',
-			color: '#ffffff',
+			color: '#00ff00', // Changed color for positive feedback
 			stroke: '#000000',
 			strokeThickness: 8
 		}).setOrigin(0.5).setAlpha(0);
 		
 		this.tweens.add({
 			targets: numText,
-			alpha: { from: 0.3, to: 0 },
+			alpha: { from: 0.8, to: 0 }, // Made it slightly more visible
+			scale: { from: 0.8, to: 1.2 }, // Added a subtle zoom
 			duration: 1500,
 			ease: 'Sine.easeInOut',
 			onComplete: () => {

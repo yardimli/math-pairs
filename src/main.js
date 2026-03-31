@@ -1,3 +1,5 @@
+// MODIFIED: Import the new TutorialScene
+import { TutorialScene } from './scenes/TutorialScene.js';
 import { MatchGameScene } from './scenes/MatchGameScene.js';
 import { GameOverScene } from './scenes/GameOverScene.js';
 
@@ -19,7 +21,8 @@ export async function launchGame (gridSize, targetSum, floatMargin, floatSpeed) 
 				debug: false
 			}
 		},
-		scene: [MatchGameScene, GameOverScene]
+		// MODIFIED: Added TutorialScene to the beginning of the scene array.
+		scene: [TutorialScene, MatchGameScene, GameOverScene]
 	};
 	
 	const game = new Phaser.Game(config);

@@ -213,11 +213,16 @@ export class CardManager {
 	};
 	
 	match (c1, c2) {
+		// NEW: Disable interaction immediately to prevent the bug.
+		c1.disableInteractive();
+		c2.disableInteractive();
+		
 		this.scene.sound.play('win');
 		this.scene.pairsFound++;
 		this.cards = this.cards.filter(c => c !== c1 && c !== c2);
 		
-		this.scene.showFadedNumber(this.targetSum);
+		// MODIFIED: Pass the matched card values to show the full equation.
+		this.scene.showFadedNumber(this.targetSum, c1.matchValue, c2.matchValue);
 		
 		[c1, c2].forEach(c => {
 			c.body.enable = false;
