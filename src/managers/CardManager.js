@@ -1,14 +1,14 @@
 export class CardManager {
 	constructor (scene) {
 		this.scene = scene;
-		this.cards = [];
+		this.cards =[];
 	};
 	
-	// MODIFIED: create now accepts floatMargin and floatSpeed
+	// MODIFIED: The grid calculation logic has been updated to ensure equal horizontal and vertical spacing.
 	create (gridSize, targetSum, floatMargin, floatSpeed) {
 		this.targetSum = targetSum;
-		this.floatMargin = floatMargin; // NEW: Store float margin
-		this.floatSpeed = floatSpeed; // NEW: Store float speed
+		this.floatMargin = floatMargin;
+		this.floatSpeed = floatSpeed;
 		
 		const totalSlots = gridSize * gridSize;
 		const totalCards = totalSlots % 2 === 0 ? totalSlots : totalSlots - 1;
@@ -17,18 +17,35 @@ export class CardManager {
 		const cardDataPool = this.generateCardData(totalCards / 2, targetSum);
 		Phaser.Utils.Array.Shuffle(cardDataPool);
 		
-		// MODIFIED: Padding calculation ensures equal spacing
-		const paddingX = 100;
-		const paddingY = 100;
-		const gridW = width - (paddingX * 2);
-		const gridH = height - (paddingY * 2);
-		const cellW = gridW / gridSize;
-		const cellH = gridH / gridSize;
+		// --- START: Grid Calculation Block ---
 		
-		const cellSize = Math.min(cellW, cellH);
+		// Define a base padding from the edges of the screen.
+		const padding = 100;
+		
+		// Calculate the total available area for the grid after applying padding.
+		const availableWidth = width - (padding * 2);
+		const availableHeight = height - (padding * 2);
+		
+		// To create a square grid, we must use the smaller of the two dimensions as our limiting size.
+		const gridAreaSize = Math.min(availableWidth, availableHeight);
+		
+		// The size of each cell is now uniform because the grid area is a perfect square.
+		const cellSize = gridAreaSize / gridSize;
+		
+		// The card's visual size is a percentage of the cell size to create spacing.
 		const cardSize = cellSize * 0.85;
 		
-		const cardPairs = [];
+		// Calculate the remaining space on each axis to center the grid perfectly.
+		const offsetX = (availableWidth - gridAreaSize) / 2;
+		const offsetY = (availableHeight - gridAreaSize) / 2;
+		
+		// The starting point for the grid is the base padding plus the centering offset.
+		const gridStartX = padding + offsetX;
+		const gridStartY = padding + offsetY;
+		
+		// --- END: Grid Calculation Block ---
+		
+		const cardPairs =[];
 		for (let i = 0; i < cardDataPool.length; i += 2) {
 			cardPairs.push([cardDataPool[i], cardDataPool[i + 1]]);
 		}
@@ -37,9 +54,10 @@ export class CardManager {
 		for (let i = 0; i < totalCards; i++) {
 			const row = Math.floor(i / gridSize);
 			const col = i % gridSize;
-			// MODIFIED: Card positions are centered within cells for equal spacing
-			const x = paddingX + (col * cellW) + (cellW / 2);
-			const y = paddingY + (row * cellH) + (cellH / 2);
+			
+			// MODIFIED: Card positions are now calculated using the new centered starting points and the single cellSize.
+			const x = gridStartX + (col * cellSize) + (cellSize / 2);
+			const y = gridStartY + (row * cellSize) + (cellSize / 2);
 			
 			const data = cardDataPool[cardIndex++];
 			if (data) {
@@ -64,25 +82,13 @@ export class CardManager {
 	};
 	
 	generateCardData (pairsNeeded, targetSum) {
-		let pool = [];
+		let pool =[];
 		let usedNumbers = new Set();
 		
 		for (let i = 0; i < pairsNeeded; i++) {
 			let num1, num2;
-			let attempts = 0;
-			
-			do {
-				num1 = Phaser.Math.Between(1, targetSum - 1);
-				num2 = targetSum - num1;
-				attempts++;
-				if (attempts > 100) {
-					console.error("Could not find a unique pair.");
-					break;
-				}
-			} while (num1 === num2 || usedNumbers.has(num1) || usedNumbers.has(num2));
-			
-			usedNumbers.add(num1);
-			usedNumbers.add(num2);
+			num1 = Phaser.Math.Between(1, targetSum - 1);
+			num2 = targetSum - num1;
 			
 			pool.push({
 				matchValue: num1,
@@ -137,26 +143,36 @@ export class CardManager {
 		container.matchValue = data.matchValue;
 		container.isCard = true;
 		container.cardSize = size;
-		
-		// NEW: Store initial position for floating animation
 		container.startX = x;
 		container.startY = y;
-		// NEW: Initialize a random direction vector for movement
-		container.moveDirection = new Phaser.Math.Vector2(
-			Phaser.Math.RND.pick([-1, 1]),
-			Phaser.Math.RND.pick([-1, 1])
-		).normalize();
+		
+		container.floatVx = 0;
+		container.floatVy = 0;
+		
+		this._setRandomFloatDirection(container);
 		
 		this.scene.physics.add.existing(container);
 		container.body.setCollideWorldBounds(true);
 		container.body.setBounce(0.2, 0.2);
-		container.body.setDamping(true);
-		container.body.setDrag(0.85);
-		
-		// REMOVED: Initial random velocity is no longer needed
+		container.body.setDamping(false);
+		container.body.setDrag(600);
 		
 		container.setInteractive();
 		this.cards.push(container);
+	};
+	
+	_setRandomFloatDirection (card) {
+		const speed = Phaser.Math.Between(1, this.floatSpeed);
+		const speedPerMs = speed / 1000;
+		const direction = Phaser.Math.RND.pick([-1, 1]);
+		
+		if (Phaser.Math.RND.pick(['x', 'y']) === 'x') {
+			card.floatVx = speedPerMs * direction;
+			card.floatVy = 0;
+		} else {
+			card.floatVx = 0;
+			card.floatVy = speedPerMs * direction;
+		}
 	};
 	
 	applyProximityEffect (activeCard) {};
@@ -180,12 +196,17 @@ export class CardManager {
 			this.scene.sound.play('fail', { volume: 0.5 });
 			
 			card.body.setVelocity(0, 0);
+			card.isReturning = true;
+			
 			this.scene.tweens.add({
 				targets: card,
 				x: startX,
 				y: startY,
 				duration: 300,
-				ease: 'Power2'
+				ease: 'Power2',
+				onComplete: () => {
+					card.isReturning = false;
+				}
 			});
 		}
 		this.scene.updateUI();
@@ -222,33 +243,27 @@ export class CardManager {
 	
 	reorganizeGrid () {};
 	
-	// MODIFIED: update now handles the floating animation
-	update () {
-		// Get the currently dragged card, if any
+	update (time, delta) {
 		const draggedCard = this.scene.inputManager.draggedCard;
+		const dt = delta || 16.6;
 		
 		this.cards.forEach(card => {
-			// Only apply floating animation to cards that are not being dragged
-			if (card !== draggedCard) {
-				// Reverse direction if card hits the horizontal margin
-				if (Math.abs(card.x - card.startX) >= this.floatMargin) {
-					card.moveDirection.x *= -1;
-					// Clamp position to prevent exceeding the margin
+			if (card !== draggedCard && !card.isReturning) {
+				card.x += card.floatVx * dt;
+				card.y += card.floatVy * dt;
+				
+				const hitHorizontalMargin = (card.floatVx > 0 && card.x > card.startX + this.floatMargin) ||
+					(card.floatVx < 0 && card.x < card.startX - this.floatMargin);
+				
+				const hitVerticalMargin = (card.floatVy > 0 && card.y > card.startY + this.floatMargin) ||
+					(card.floatVy < 0 && card.y < card.startY - this.floatMargin);
+				
+				if (hitHorizontalMargin || hitVerticalMargin) {
 					card.x = Phaser.Math.Clamp(card.x, card.startX - this.floatMargin, card.startX + this.floatMargin);
-				}
-				
-				// Reverse direction if card hits the vertical margin
-				if (Math.abs(card.y - card.startY) >= this.floatMargin) {
-					card.moveDirection.y *= -1;
-					// Clamp position to prevent exceeding the margin
 					card.y = Phaser.Math.Clamp(card.y, card.startY - this.floatMargin, card.startY + this.floatMargin);
+					
+					this._setRandomFloatDirection(card);
 				}
-				
-				// Apply velocity based on the direction and speed
-				card.body.setVelocity(
-					card.moveDirection.x * this.floatSpeed,
-					card.moveDirection.y * this.floatSpeed
-				);
 			}
 		});
 	};

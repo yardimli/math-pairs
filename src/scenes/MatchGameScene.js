@@ -71,7 +71,7 @@ export class MatchGameScene extends Phaser.Scene {
 		const { width, height } = this.scale;
 		
 		// --- Top Bar (Progress) ---
-		this.topSegments = [];
+		this.topSegments =[];
 		const topPadding = 50;
 		const topBarHeight = 30;
 		const totalTopSegments = this.totalPairs * 10;
@@ -95,7 +95,7 @@ export class MatchGameScene extends Phaser.Scene {
 		}).setOrigin(0.5).setStroke('#000000', 4);
 		
 		// --- Right Bar (Accuracy) ---
-		this.rightSegments = [];
+		this.rightSegments =[];
 		const rightBarWidth = 30;
 		const totalRightSegments = 100;
 		const rightBarHeight = height - 200;
@@ -145,10 +145,11 @@ export class MatchGameScene extends Phaser.Scene {
 		this.children.bringToTop(this.accuracyText);
 	};
 	
-	update () {
+	// MODIFIED: Pass time and delta to the card manager's update method
+	update (time, delta) {
 		this.inputManager.update();
 		if (this.cardManager) {
-			this.cardManager.update();
+			this.cardManager.update(time, delta); // Pass arguments here
 		}
 	};
 	
