@@ -3,7 +3,6 @@ import { TutorialScene } from './scenes/TutorialScene.js';
 import { MatchGameScene } from './scenes/MatchGameScene.js';
 import { GameOverScene } from './scenes/GameOverScene.js';
 
-// MODIFIED: launchGame now accepts floatMargin and floatSpeed
 export async function launchGame (gridSize, targetSum, floatMargin, floatSpeed) {
 	const config = {
 		type: Phaser.AUTO,

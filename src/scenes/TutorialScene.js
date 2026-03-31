@@ -43,16 +43,14 @@ export class TutorialScene extends Phaser.Scene {
 		const value2 = targetSum - value1;
 		
 		const correctValues = [value1, value2];
-		const usedValues = new Set(correctValues);
 		const wrongValues = [];
+		let wrongValue;
 		
 		// Generate four unique wrong numbers.
 		for (let i = 0; i < (gridCols * gridRows) - 2; i++) {
-			let wrongValue;
 			do {
 				wrongValue = Phaser.Math.Between(1, targetSum - 1);
-			} while (usedValues.has(wrongValue));
-			usedValues.add(wrongValue);
+			} while (wrongValue === value1 || wrongValue === value2);
 			wrongValues.push(wrongValue);
 		}
 		

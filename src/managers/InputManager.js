@@ -3,7 +3,6 @@ export class InputManager {
 		this.scene = scene;
 		this.draggedCard = null;
 		this.pointer = null;
-		// MODIFIED: lastX and lastY are no longer needed as the "wind effect" is removed.
 		this.dragStartX = 0;
 		this.dragStartY = 0;
 	};
