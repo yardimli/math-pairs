@@ -4,8 +4,11 @@ export class CardManager {
 		this.cards = [];
 	};
 	
-	create (gridSize, targetSum) {
+	// MODIFIED: create now accepts floatMargin and floatSpeed
+	create (gridSize, targetSum, floatMargin, floatSpeed) {
 		this.targetSum = targetSum;
+		this.floatMargin = floatMargin; // NEW: Store float margin
+		this.floatSpeed = floatSpeed; // NEW: Store float speed
 		
 		const totalSlots = gridSize * gridSize;
 		const totalCards = totalSlots % 2 === 0 ? totalSlots : totalSlots - 1;
@@ -14,16 +17,15 @@ export class CardManager {
 		const cardDataPool = this.generateCardData(totalCards / 2, targetSum);
 		Phaser.Utils.Array.Shuffle(cardDataPool);
 		
-		const padding = 100;
-		const gridW = width - (padding * 2);
-		const gridH = height - (padding * 2);
+		// MODIFIED: Padding calculation ensures equal spacing
+		const paddingX = 100;
+		const paddingY = 100;
+		const gridW = width - (paddingX * 2);
+		const gridH = height - (paddingY * 2);
 		const cellW = gridW / gridSize;
 		const cellH = gridH / gridSize;
 		
-		// MODIFIED: Calculate card size dynamically
-		// Use the smaller of the two cell dimensions to ensure it fits
 		const cellSize = Math.min(cellW, cellH);
-		// Set the card size to be a percentage of the cell size to create margins
 		const cardSize = cellSize * 0.85;
 		
 		const cardPairs = [];
@@ -35,12 +37,12 @@ export class CardManager {
 		for (let i = 0; i < totalCards; i++) {
 			const row = Math.floor(i / gridSize);
 			const col = i % gridSize;
-			const x = padding + (col * cellW) + (cellW / 2);
-			const y = padding + (row * cellH) + (cellH / 2);
+			// MODIFIED: Card positions are centered within cells for equal spacing
+			const x = paddingX + (col * cellW) + (cellW / 2);
+			const y = paddingY + (row * cellH) + (cellH / 2);
 			
 			const data = cardDataPool[cardIndex++];
 			if (data) {
-				// MODIFIED: Pass the calculated cardSize to the spawn function
 				this.spawnCard(x, y, data, cardSize);
 			}
 		}
@@ -94,13 +96,11 @@ export class CardManager {
 		return pool;
 	};
 	
-	// MODIFIED: spawnCard now accepts a 'size' parameter
 	spawnCard (x, y, data, size) {
 		const container = this.scene.add.container(x, y);
 		
 		const visualColor = 0x333333;
 		
-		// MODIFIED: Shadow offset is now proportional to the card size
 		const shadowOffset = size * 0.05;
 		const shadow = this.scene.add.rectangle(shadowOffset, shadowOffset, size, size, 0x000000, 0.3);
 		container.add(shadow);
@@ -109,7 +109,6 @@ export class CardManager {
 		rect.setStrokeStyle(2, 0xffffff, 0.8);
 		container.add(rect);
 		
-		// MODIFIED: Bevel effects are now drawn based on the dynamic size
 		const highlight = this.scene.add.graphics();
 		highlight.lineStyle(3, 0xffffff, 0.5);
 		highlight.lineBetween(-size / 2, -size / 2, size / 2, -size / 2);
@@ -122,9 +121,8 @@ export class CardManager {
 		
 		container.add([highlight, lowlight]);
 		
-		// MODIFIED: Font size is now proportional to the card size
 		const textStyle = {
-			fontSize: `${Math.floor(size * 0.5)}px`, // Font size is half the card height
+			fontSize: `${Math.floor(size * 0.5)}px`,
 			fontFamily: 'Arial',
 			fontStyle: 'bold',
 			color: '#ffffff',
@@ -138,7 +136,16 @@ export class CardManager {
 		container.setSize(size, size);
 		container.matchValue = data.matchValue;
 		container.isCard = true;
-		container.cardSize = size; // NEW: Store the size on the card for later use
+		container.cardSize = size;
+		
+		// NEW: Store initial position for floating animation
+		container.startX = x;
+		container.startY = y;
+		// NEW: Initialize a random direction vector for movement
+		container.moveDirection = new Phaser.Math.Vector2(
+			Phaser.Math.RND.pick([-1, 1]),
+			Phaser.Math.RND.pick([-1, 1])
+		).normalize();
 		
 		this.scene.physics.add.existing(container);
 		container.body.setCollideWorldBounds(true);
@@ -146,7 +153,7 @@ export class CardManager {
 		container.body.setDamping(true);
 		container.body.setDrag(0.85);
 		
-		container.body.setVelocity(Phaser.Math.Between(-10, 10), Phaser.Math.Between(-10, 10));
+		// REMOVED: Initial random velocity is no longer needed
 		
 		container.setInteractive();
 		this.cards.push(container);
@@ -161,7 +168,6 @@ export class CardManager {
 		const target = this.cards.find(t => {
 			if (t === card) return false;
 			const dist = Phaser.Math.Distance.Between(card.x, card.y, t.x, t.y);
-			// MODIFIED: The drop distance check is now based on the card's size
 			return dist < card.cardSize * 0.8 && (t.matchValue + card.matchValue) === this.targetSum;
 		});
 		
@@ -216,5 +222,34 @@ export class CardManager {
 	
 	reorganizeGrid () {};
 	
-	update () {};
+	// MODIFIED: update now handles the floating animation
+	update () {
+		// Get the currently dragged card, if any
+		const draggedCard = this.scene.inputManager.draggedCard;
+		
+		this.cards.forEach(card => {
+			// Only apply floating animation to cards that are not being dragged
+			if (card !== draggedCard) {
+				// Reverse direction if card hits the horizontal margin
+				if (Math.abs(card.x - card.startX) >= this.floatMargin) {
+					card.moveDirection.x *= -1;
+					// Clamp position to prevent exceeding the margin
+					card.x = Phaser.Math.Clamp(card.x, card.startX - this.floatMargin, card.startX + this.floatMargin);
+				}
+				
+				// Reverse direction if card hits the vertical margin
+				if (Math.abs(card.y - card.startY) >= this.floatMargin) {
+					card.moveDirection.y *= -1;
+					// Clamp position to prevent exceeding the margin
+					card.y = Phaser.Math.Clamp(card.y, card.startY - this.floatMargin, card.startY + this.floatMargin);
+				}
+				
+				// Apply velocity based on the direction and speed
+				card.body.setVelocity(
+					card.moveDirection.x * this.floatSpeed,
+					card.moveDirection.y * this.floatSpeed
+				);
+			}
+		});
+	};
 };

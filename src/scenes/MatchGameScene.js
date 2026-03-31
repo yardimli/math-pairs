@@ -14,9 +14,11 @@ export class MatchGameScene extends Phaser.Scene {
 	};
 	
 	create () {
-		// MODIFIED: Get new settings from registry
+		// MODIFIED: Get new settings from registry, including float controls
 		const gridSize = this.registry.get('gridSize');
 		const targetSum = this.registry.get('targetSum');
+		const floatMargin = this.registry.get('floatMargin');
+		const floatSpeed = this.registry.get('floatSpeed');
 		
 		this.pairsFound = 0;
 		this.totalAttempts = 0;
@@ -26,8 +28,8 @@ export class MatchGameScene extends Phaser.Scene {
 		this.cardManager = new CardManager(this);
 		this.inputManager = new InputManager(this);
 		
-		// MODIFIED: Pass new settings to create method
-		const totalCards = this.cardManager.create(gridSize, targetSum);
+		// MODIFIED: Pass new settings to the create method
+		const totalCards = this.cardManager.create(gridSize, targetSum, floatMargin, floatSpeed);
 		this.totalPairs = totalCards / 2;
 		
 		this.inputManager.create();
@@ -43,7 +45,6 @@ export class MatchGameScene extends Phaser.Scene {
 		this.bg.fillRect(0, 0, width, height);
 	};
 	
-	// NEW: Function to show a large faded number in the background
 	showFadedNumber (number) {
 		const { width, height } = this.scale;
 		const numText = this.add.text(width / 2, height / 2, number.toString(), {

@@ -1,8 +1,8 @@
 import { MatchGameScene } from './scenes/MatchGameScene.js';
 import { GameOverScene } from './scenes/GameOverScene.js';
 
-// MODIFIED: launchGame now accepts gridSize and targetSum
-export async function launchGame (gridSize, targetSum) {
+// MODIFIED: launchGame now accepts floatMargin and floatSpeed
+export async function launchGame (gridSize, targetSum, floatMargin, floatSpeed) {
 	const config = {
 		type: Phaser.AUTO,
 		width: window.innerWidth,
@@ -27,6 +27,8 @@ export async function launchGame (gridSize, targetSum) {
 	// MODIFIED: Store new settings in registry
 	game.registry.set('gridSize', gridSize);
 	game.registry.set('targetSum', targetSum);
+	game.registry.set('floatMargin', floatMargin); // NEW: Store float margin
+	game.registry.set('floatSpeed', floatSpeed); // NEW: Store float speed
 	
 	return game;
 };

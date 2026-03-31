@@ -3,11 +3,11 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Sum Pair Game</title> <!-- MODIFIED: Title changed -->
-	<link rel="apple-touch-icon" sizes="180x180" href="/color-pair-game/apple-touch-icon.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="/color-pair-game/favicon-32x32.png">
-	<link rel="icon" type="image/png" sizes="16x16" href="/color-pair-game/favicon-16x16.png">
-	<link rel="manifest" href="/color-pair-game/site.webmanifest">
+	<title>Sum Pair Game</title>
+	<link rel="apple-touch-icon" sizes="180x180" href="/math-pairs/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/math-pairs/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/math-pairs/favicon-16x16.png">
+	<link rel="manifest" href="/math-pairs/site.webmanifest">
 	<style>
 		body {
 			margin: 0;
@@ -34,7 +34,7 @@
 		.control-group { margin-bottom: 20px; text-align: center; width: 300px; }
 		label { display: block; margin-bottom: 10px; font-size: 20px; font-weight: bold; }
 		input[type="range"] { width: 100%; cursor: pointer; }
-		.value-display { font-size: 32px; color: #00ccff; display: block; margin-top: 10px; } /* MODIFIED: Renamed class for clarity */
+		.value-display { font-size: 32px; color: #00ccff; display: block; margin-top: 10px; }
 		
 		button {
 			padding: 15px 50px;
@@ -46,7 +46,7 @@
 			border-radius: 50px;
 			cursor: pointer;
 			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-			margin-top: 20px; /* NEW: Added margin */
+			margin-top: 20px;
 		}
 		button:hover { background: #00aa38; transform: scale(1.05); }
 	</style>
@@ -54,21 +54,29 @@
 </head>
 <body>
 <div id="ui-layer">
-	<h1>SUM PAIR GAME</h1> <!-- MODIFIED: Title changed -->
+	<h1>SUM PAIR GAME</h1>
 	
-	<!-- MODIFIED: Grid size slider now has steps of 2 -->
 	<div class="control-group">
 		<label>Grid Size: <span id="grid-display" class="value-display">4 x 4</span></label>
 		<input type="range" id="grid-slider" min="2" max="14" value="4" step="2">
 	</div>
 	
-	<!-- NEW: Target sum slider -->
 	<div class="control-group">
 		<label>Target Sum: <span id="sum-display" class="value-display">10</span></label>
 		<input type="range" id="sum-slider" min="5" max="20" value="10">
 	</div>
 	
-	<!-- REMOVED: Game mode controls removed -->
+	<!-- NEW: Float Margin slider -->
+	<div class="control-group">
+		<label>Float Margin: <span id="margin-display" class="value-display">5 px</span></label>
+		<input type="range" id="margin-slider" min="0" max="20" value="5">
+	</div>
+	
+	<!-- NEW: Float Speed slider -->
+	<div class="control-group">
+		<label>Float Speed: <span id="speed-display" class="value-display">10</span></label>
+		<input type="range" id="speed-slider" min="5" max="50" value="10">
+	</div>
 	
 	<button id="start-btn">START</button>
 </div>
@@ -78,8 +86,13 @@
 	
 	const gridSlider = document.getElementById('grid-slider');
 	const gridDisplay = document.getElementById('grid-display');
-	const sumSlider = document.getElementById('sum-slider'); // NEW: Get sum slider
-	const sumDisplay = document.getElementById('sum-display'); // NEW: Get sum display
+	const sumSlider = document.getElementById('sum-slider');
+	const sumDisplay = document.getElementById('sum-display');
+	// NEW: Get float control elements
+	const marginSlider = document.getElementById('margin-slider');
+	const marginDisplay = document.getElementById('margin-display');
+	const speedSlider = document.getElementById('speed-slider');
+	const speedDisplay = document.getElementById('speed-display');
 	const startBtn = document.getElementById('start-btn');
 	const uiLayer = document.getElementById('ui-layer');
 	
@@ -88,20 +101,30 @@
 		gridDisplay.textContent = `${gridSlider.value} x ${gridSlider.value}`;
 	});
 	
-	// NEW: Update Target Sum Display
+	// Update Target Sum Display
 	sumSlider.addEventListener('input', () => {
 		sumDisplay.textContent = sumSlider.value;
 	});
 	
-	// REMOVED: Game mode logic removed
+	// NEW: Update Float Margin Display
+	marginSlider.addEventListener('input', () => {
+		marginDisplay.textContent = `${marginSlider.value} px`;
+	});
+	
+	// NEW: Update Float Speed Display
+	speedSlider.addEventListener('input', () => {
+		speedDisplay.textContent = speedSlider.value;
+	});
 	
 	startBtn.addEventListener('click', () => {
 		uiLayer.classList.add('hidden');
 		
-		// MODIFIED: Launch game with new settings
+		// MODIFIED: Launch game with new float settings
 		launchGame(
 			parseInt(gridSlider.value),
-			parseInt(sumSlider.value)
+			parseInt(sumSlider.value),
+			parseInt(marginSlider.value),
+			parseInt(speedSlider.value)
 		);
 	});
 </script>
